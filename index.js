@@ -5,6 +5,7 @@ const web3 = require('web3');
 let currentTrade = {};
 let currentSelectSide;
 let tokens;
+const erc20abi= [{ "inputs": [ { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }, { "internalType": "uint256", "name": "max_supply", "type": "uint256" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Transfer", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" } ], "name": "allowance", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "approve", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" } ], "name": "balanceOf", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "burn", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "burnFrom", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [ { "internalType": "uint8", "name": "", "type": "uint8" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "subtractedValue", "type": "uint256" } ], "name": "decreaseAllowance", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "addedValue", "type": "uint256" } ], "name": "increaseAllowance", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "name", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "transfer", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "sender", "type": "address" }, { "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "transferFrom", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }]
 
 async function init() {
     await listAvailableTokens();
@@ -33,7 +34,7 @@ async function listAvailableTokens(){
     "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6/logo.png"
   }],"version":{"major":1157,"minor":0,"patch":0}};
 
-    let tokenListJSON = response;//await response.json();
+    let tokenListJSON = response;  // await response.json(); 
     console.log("listing available tokens: ", tokenListJSON);
     tokens = tokenListJSON.tokens;
     console.log("tokens: ", tokens);
@@ -92,6 +93,44 @@ async function connect() {
     }
 }
 
+async function approve0x() {
+    // Only work if MetaMask is connect
+    // Connecting to Ethereum: Metamask
+    const web3 = new Web3(Web3.givenProvider);
+
+    // The address, if any, of the most recently used account that the caller is permitted to access
+    let accounts = await ethereum.request({ method: "eth_accounts" });
+    let takerAddress = accounts[0];
+    if (currentTrade.from) {
+        console.log(currentTrade.from)
+        console.log("symbol", currentTrade.from.symbol);
+        console.log("address:", currentTrade.from.address);
+        console.log("takerAddress:", takerAddress);
+        const ERC20TokenContract = new web3.eth.Contract(erc20abi, currentTrade.from.address);
+
+        ERC20TokenContract.methods.allowance(takerAddress, currentTrade.from.address).call().then(
+            async function(tx) {
+                console.log("tx:", tx);
+                if (tx == 0) {
+                    const maxApproval = new BigNumber(2).pow(256).minus(1);
+
+                    // Grant the allowance target an allowance to spend our tokens.
+                    const tx = await ERC20TokenContract.methods.approve(
+                        takerAddress,
+                        maxApproval,
+                    )
+                    .send({ from: takerAddress })
+                    .then(tx => {
+                        console.log("tx: ", tx)
+                    });
+                } else {
+                    document.getElementById("Approve_0x_button").innerHTML = "Approved";
+                }
+            }
+        )
+    }
+}
+
 function openModal(side){
     currentSelectSide = side;
     document.getElementById("token_modal").style.display = "block";
@@ -101,7 +140,7 @@ function closeModal(){
     document.getElementById("token_modal").style.display = "none";
 }
 
-async function getPrice(){
+async function getPrice() {
     console.log("Getting Price");
   
     if (!currentTrade.from || !currentTrade.to || !document.getElementById("from_amount").value) return;
@@ -121,9 +160,11 @@ async function getPrice(){
     
     document.getElementById("to_amount").value = swapPriceJSON.buyAmount / (10 ** currentTrade.to.decimals);
     document.getElementById("gas_estimate").innerHTML = swapPriceJSON.estimatedGas;
+    document.getElementById("Approve_0x_button").disabled = false;
+    document.getElementById("token_selected").innerHTML = currentTrade.from.symbol;
 }
 
-async function getQuote(account){
+async function getQuote(account) {
     console.log("Getting Quote");
   
     if (!currentTrade.from || !currentTrade.to || !document.getElementById("from_amount").value) return;
@@ -134,8 +175,11 @@ async function getQuote(account){
         buyToken: currentTrade.to.address,
         sellAmount: amount,
         takerAddress: account,
+        buyTokenPercentageFee: 0.1 ,
+        feeRecipient: "0xe3cfF2780859Ef59c0DE26386BB1F4C4B26BCDfb", 
     }
-  
+    
+    console.log("params:",params)
     // Fetch the swap quote.
     const response = await fetch(`https://goerli.api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
     
@@ -144,18 +188,16 @@ async function getQuote(account){
     
     document.getElementById("to_amount").value = swapQuoteJSON.buyAmount / (10 ** currentTrade.to.decimals);
     document.getElementById("gas_estimate").innerHTML = swapQuoteJSON.estimatedGas;
-  
+
     return swapQuoteJSON;
 }
 
 async function trySwap(){
-    const erc20abi= [{ "inputs": [ { "internalType": "string", "name": "name", "type": "string" }, { "internalType": "string", "name": "symbol", "type": "string" }, { "internalType": "uint256", "name": "max_supply", "type": "uint256" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Transfer", "type": "event" }, { "inputs": [ { "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" } ], "name": "allowance", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "approve", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" } ], "name": "balanceOf", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "burn", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "account", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "burnFrom", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [ { "internalType": "uint8", "name": "", "type": "uint8" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "subtractedValue", "type": "uint256" } ], "name": "decreaseAllowance", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "addedValue", "type": "uint256" } ], "name": "increaseAllowance", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "name", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "transfer", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "sender", "type": "address" }, { "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "transferFrom", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }]
     console.log("trying swap");
-  
     // Only work if MetaMask is connect
     // Connecting to Ethereum: Metamask
     const web3 = new Web3(Web3.givenProvider);
-  
+
     // The address, if any, of the most recently used account that the caller is permitted to access
     let accounts = await ethereum.request({ method: "eth_accounts" });
     let takerAddress = accounts[0];
@@ -189,6 +231,7 @@ async function trySwap(){
 init();
 
 document.getElementById("login_button").onclick = connect;
+document.getElementById("Approve_0x_button").onclick = approve0x;
 document.getElementById("from_token_select").onclick = () => {
     openModal("from");
 };
