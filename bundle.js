@@ -16,28 +16,28 @@ async function init() {
 
 async function listAvailableTokens(){
     console.log("initializing");
-    // let response = await fetch('https://tokens.coingecko.com/uniswap/all.json');
+    let response = await fetch('https://tokens.coingecko.com/uniswap/all.json');
    // let response = await fetch('https://tokens.uniswap.org/');
-   let response = {"name":"CoinGecko","logoURI":"https://www.coingecko.com/assets/thumbnail-007177f3eca19695592f0b8b0eabbdae282b54154e1be912285c9034ea6cbaf2.png",
-   "keywords":["defi"],"timestamp":"2022-12-25T11:06:30.979+00:00","tokens":
-   [{
-    "name": "Uniswap",
-    "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-    "symbol": "UNI",
-    "decimals": 18,
-    "chainId": 5,
-    "logoURI": "ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg"
-  },
-  {
-    "name": "Wrapped Ether",
-    "address": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
-    "symbol": "WETH",
-    "decimals": 18,
-    "chainId": 5,
-    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6/logo.png"
-  }],"version":{"major":1157,"minor":0,"patch":0}};
+//    let response = {"name":"CoinGecko","logoURI":"https://www.coingecko.com/assets/thumbnail-007177f3eca19695592f0b8b0eabbdae282b54154e1be912285c9034ea6cbaf2.png",
+//    "keywords":["defi"],"timestamp":"2022-12-25T11:06:30.979+00:00","tokens":
+//    [{
+//     "name": "Uniswap",
+//     "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+//     "symbol": "UNI",
+//     "decimals": 18,
+//     "chainId": 5,
+//     "logoURI": "ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg"
+//   },
+//   {
+//     "name": "Wrapped Ether",
+//     "address": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+//     "symbol": "WETH",
+//     "decimals": 18,
+//     "chainId": 5,
+//     "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6/logo.png"
+//   }],"version":{"major":1157,"minor":0,"patch":0}};
 
-    let tokenListJSON = response;  // await response.json(); 
+    let tokenListJSON = await response.json(); 
     console.log("listing available tokens: ", tokenListJSON);
     tokens = tokenListJSON.tokens;
     console.log("tokens: ", tokens);
@@ -112,10 +112,6 @@ async function approve0x() {
         }
         let takerAddress = accounts[0];
         if (currentTrade.from) {
-            console.log(currentTrade.from)
-            console.log("symbol", currentTrade.from.symbol);
-            console.log("address:", currentTrade.from.address);
-            console.log("takerAddress:", takerAddress);
             const ERC20TokenContract = new web3.eth.Contract(erc20abi, currentTrade.from.address);
                                                                 // // goerli address
             ERC20TokenContract.methods.allowance(takerAddress, "0xdef1c0ded9bec7f1a1670819833240f027b25eff").call().then(
@@ -191,7 +187,7 @@ async function getQuote(account) {
         sellAmount: amount,
         takerAddress: account,
         buyTokenPercentageFee: 0.1 ,
-        feeRecipient: "0xe3cfF2780859Ef59c0DE26386BB1F4C4B26BCDfb",
+        feeRecipient: "0xB24D6E49391E5fEDc800808866aF2FE23662694f",
     }
 
     console.log("params:",params)
