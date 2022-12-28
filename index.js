@@ -164,7 +164,6 @@ async function getPrice() {
     const response = await fetch(`https://api.0x.org/swap/v1/price?${qs.stringify(params)}`);
     
     swapPriceJSON = await response.json();
-    // document.getElementById("errorarea").innerHTML = 
     console.log("Price: ", swapPriceJSON);
     
     document.getElementById("to_amount").value = swapPriceJSON.buyAmount / (10 ** currentTrade.to.decimals);
@@ -174,31 +173,39 @@ async function getPrice() {
 }
 
 async function getQuote(account) {
-    console.log("Getting Quote");
-  
-    if (!currentTrade.from || !currentTrade.to || !document.getElementById("from_amount").value) return;
-    let amount = Number(document.getElementById("from_amount").value * 10 ** currentTrade.from.decimals);
-  
-    const params = {
-        sellToken: currentTrade.from.address,
-        buyToken: currentTrade.to.address,
-        sellAmount: amount,
-        takerAddress: account,
-        buyTokenPercentageFee: 0.1 ,
-        feeRecipient: "0xB24D6E49391E5fEDc800808866aF2FE23662694f",
+    try {
+        console.log("Getting Quote");
+    
+        if (!currentTrade.from || !currentTrade.to || !document.getElementById("from_amount").value) return;
+        let amount = Number(document.getElementById("from_amount").value * 10 ** currentTrade.from.decimals);
+    
+        const params = {
+            sellToken: currentTrade.from.address,
+            buyToken: currentTrade.to.address,
+            sellAmount: amount,
+            takerAddress: account,
+            buyTokenPercentageFee: 0.1 ,
+            feeRecipient: "0xB24D6E49391E5fEDc800808866aF2FE23662694f",
+        }
+
+        console.log("params:",params)
+        // Fetch the swap quote.
+        const response = await fetch(`https://api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
+        console.log("response:",response);
+        console.log("sttus:", response.status, response.type);
+        if (response.status == 400) {
+            document.getElementById("errorarea").innerHTML = "error occured, status"+response.status + "  type:"+ response.type;
+        }
+        swapQuoteJSON = await response.json();
+        console.log("Quote: ", swapQuoteJSON);
+        
+        document.getElementById("to_amount").value = swapQuoteJSON.buyAmount / (10 ** currentTrade.to.decimals);
+        document.getElementById("gas_estimate").innerHTML = swapQuoteJSON.estimatedGas;
+
+        return swapQuoteJSON;
+    } catch(error){
+        console.log("error::::::", error);
     }
-
-    console.log("params:",params)
-    // Fetch the swap quote.
-    const response = await fetch(`https://api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
-    
-    swapQuoteJSON = await response.json();
-    console.log("Quote: ", swapQuoteJSON);
-    
-    document.getElementById("to_amount").value = swapQuoteJSON.buyAmount / (10 ** currentTrade.to.decimals);
-    document.getElementById("gas_estimate").innerHTML = swapQuoteJSON.estimatedGas;
-
-    return swapQuoteJSON;
 }
 
 async function trySwap(){
