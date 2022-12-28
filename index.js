@@ -107,16 +107,16 @@ async function approve0x() {
         console.log("address:", currentTrade.from.address);
         console.log("takerAddress:", takerAddress);
         const ERC20TokenContract = new web3.eth.Contract(erc20abi, currentTrade.from.address);
-
-        ERC20TokenContract.methods.allowance(takerAddress, currentTrade.from.address).call().then(
+                                                            // // goerli address
+        ERC20TokenContract.methods.allowance(takerAddress, "0xf91bb752490473b8342a3e964e855b9f9a2a668e").call().then(
             async function(tx) {
                 console.log("tx:", tx);
                 if (tx == 0) {
                     const maxApproval = new BigNumber(2).pow(256).minus(1);
 
                     // Grant the allowance target an allowance to spend our tokens.
-                    const tx = await ERC20TokenContract.methods.approve(
-                        takerAddress,
+                    const txApp = await ERC20TokenContract.methods.approve(
+                        "0xf91bb752490473b8342a3e964e855b9f9a2a668e", // goerli address
                         maxApproval,
                     )
                     .send({ from: takerAddress })
@@ -176,9 +176,9 @@ async function getQuote(account) {
         sellAmount: amount,
         takerAddress: account,
         buyTokenPercentageFee: 0.1 ,
-        feeRecipient: "0xe3cfF2780859Ef59c0DE26386BB1F4C4B26BCDfb", 
+        feeRecipient: "0xe3cfF2780859Ef59c0DE26386BB1F4C4B26BCDfb",
     }
-    
+
     console.log("params:",params)
     // Fetch the swap quote.
     const response = await fetch(`https://goerli.api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
