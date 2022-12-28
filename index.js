@@ -194,7 +194,7 @@ async function getQuote(account) {
         console.log("response:",response);
         console.log("sttus:", response.status, response.type);
         if (response.status == 400) {
-            document.getElementById("errorarea").innerHTML = "error occured, status"+response.status + "  type:"+ response.type;
+            document.getElementById("errorarea").innerHTML = "error occured, status"+response.status ;
         }
         swapQuoteJSON = await response.json();
         console.log("Quote: ", swapQuoteJSON);
