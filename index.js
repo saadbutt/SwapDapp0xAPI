@@ -161,9 +161,10 @@ async function getPrice() {
     }
   
     // Fetch the swap price.
-    const response = await fetch(`https://goerli.api.0x.org/swap/v1/price?${qs.stringify(params)}`);
+    const response = await fetch(`https://api.0x.org/swap/v1/price?${qs.stringify(params)}`);
     
     swapPriceJSON = await response.json();
+    // document.getElementById("errorarea").innerHTML = 
     console.log("Price: ", swapPriceJSON);
     
     document.getElementById("to_amount").value = swapPriceJSON.buyAmount / (10 ** currentTrade.to.decimals);
@@ -189,7 +190,7 @@ async function getQuote(account) {
 
     console.log("params:",params)
     // Fetch the swap quote.
-    const response = await fetch(`https://goerli.api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
+    const response = await fetch(`https://api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
     
     swapQuoteJSON = await response.json();
     console.log("Quote: ", swapQuoteJSON);
