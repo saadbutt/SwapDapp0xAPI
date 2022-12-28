@@ -90,6 +90,7 @@ async function connect() {
         }
         document.getElementById("login_button").innerHTML = "Connected";
         // const accounts = await ethereum.request({ method: "eth_accounts" });
+        document.getElementById("Approve_0x_button").disabled = false;
         document.getElementById("swap_button").disabled = false;
     } else {
         document.getElementById("login_button").innerHTML = "Please install MetaMask";
@@ -97,40 +98,51 @@ async function connect() {
 }
 
 async function approve0x() {
-    // Only work if MetaMask is connect
-    // Connecting to Ethereum: Metamask
-    const web3 = new Web3(Web3.givenProvider);
+    try {
 
-    // The address, if any, of the most recently used account that the caller is permitted to access
-    let accounts = await ethereum.request({ method: "eth_accounts" });
-    let takerAddress = accounts[0];
-    if (currentTrade.from) {
-        console.log(currentTrade.from)
-        console.log("symbol", currentTrade.from.symbol);
-        console.log("address:", currentTrade.from.address);
-        console.log("takerAddress:", takerAddress);
-        const ERC20TokenContract = new web3.eth.Contract(erc20abi, currentTrade.from.address);
+        // Only work if MetaMask is connect
+        // Connecting to Ethereum: Metamask
+        const web3 = new Web3(Web3.givenProvider);
 
-        ERC20TokenContract.methods.allowance(takerAddress, "0xf91bb752490473b8342a3e964e855b9f9a2a668e").call().then(
-            async function(tx) {
-                console.log("tx:", tx);
-                if (tx == 0) {
-                    const maxApproval = new BigNumber(2).pow(256).minus(1);
+        // The address, if any, of the most recently used account that the caller is permitted to access
+        let accounts = await ethereum.request({ method: "eth_accounts" });
+        if (accounts[0] == null) {
+            document.getElementById("Approve_0x_button").disabled = false;
+            return
+        }
+        let takerAddress = accounts[0];
+        if (currentTrade.from) {
+            console.log(currentTrade.from)
+            console.log("symbol", currentTrade.from.symbol);
+            console.log("address:", currentTrade.from.address);
+            console.log("takerAddress:", takerAddress);
+            const ERC20TokenContract = new web3.eth.Contract(erc20abi, currentTrade.from.address);
+                                                                // // goerli address
+            ERC20TokenContract.methods.allowance(takerAddress, "0xdef1c0ded9bec7f1a1670819833240f027b25eff").call().then(
+                async function(tx) {
+                    console.log("tx:", tx);
+                    if (tx == 0) {
+                        const maxApproval = new BigNumber(2).pow(256).minus(1);
 
-                    // Grant the allowance target an allowance to spend our tokens.
-                    const txApp = await ERC20TokenContract.methods.approve(
-                        "0xf91bb752490473b8342a3e964e855b9f9a2a668e", // goerli address
-                        maxApproval,
-                    )
-                    .send({ from: takerAddress })
-                    .then(tx => {
-                        console.log("tx: ", tx)
-                    });
-                } else {
-                    document.getElementById("Approve_0x_button").innerHTML = "Approved";
+                        // Grant the allowance target an allowance to spend our tokens.
+                        const txApp = await ERC20TokenContract.methods.approve(
+                            "0xdef1c0ded9bec7f1a1670819833240f027b25eff", // goerli address
+                            maxApproval,
+                        )
+                        .send({ from: takerAddress })
+                        .then(tx => {
+                            console.log("tx: ", tx)
+                        });
+                    } else {
+                        document.getElementById("Approve_0x_button").innerHTML = "Approved";
+                    }
                 }
-            }
-        )
+            )
+        }
+    } catch (error) {
+        console.log(error);
+        document.getElementById("Approve_0x_button").disabled = false;
+        return
     }
 }
 
@@ -163,7 +175,7 @@ async function getPrice() {
     
     document.getElementById("to_amount").value = swapPriceJSON.buyAmount / (10 ** currentTrade.to.decimals);
     document.getElementById("gas_estimate").innerHTML = swapPriceJSON.estimatedGas;
-    document.getElementById("Approve_0x_button").disabled = false;
+    // document.getElementById("Approve_0x_button").disabled = true;
     document.getElementById("token_selected").innerHTML = currentTrade.from.symbol;
 }
 
@@ -179,7 +191,7 @@ async function getQuote(account) {
         sellAmount: amount,
         takerAddress: account,
         buyTokenPercentageFee: 0.1 ,
-        feeRecipient: "0xe3cfF2780859Ef59c0DE26386BB1F4C4B26BCDfb", 
+        feeRecipient: "0xe3cfF2780859Ef59c0DE26386BB1F4C4B26BCDfb",
     }
 
     console.log("params:",params)
@@ -242,7 +254,7 @@ document.getElementById("to_token_select").onclick = () => {
     openModal("to");
 };
 document.getElementById("modal_close").onclick = closeModal;
-document.getElementById("from_amount").onblur = getPrice;
+document.getElementById("from_amount").oninput = getPrice;
 document.getElementById("swap_button").onclick = trySwap;
 },{"bignumber.js":3,"qs":14,"web3":19}],3:[function(require,module,exports){
 ;(function (globalObject) {
