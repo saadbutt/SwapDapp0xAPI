@@ -122,7 +122,7 @@ async function approve0x() {
                             "0xdef1c0ded9bec7f1a1670819833240f027b25eff", // goerli address
                             maxApproval,
                         )
-                        .send({ from: takerAddress })
+                        .send({ from: takerAddress, gasLimit: 60000 })
                         .then(tx => {
                             console.log("tx: ", tx)
                         });
