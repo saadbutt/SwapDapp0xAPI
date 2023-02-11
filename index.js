@@ -122,7 +122,7 @@ async function approve0x() {
                             "0xdef1c0ded9bec7f1a1670819833240f027b25eff", // goerli address
                             maxApproval,
                         )
-                        .send({ from: takerAddress, gasLimit: 60000 })
+                        .send({ from: takerAddress, gasLimit: 300000 })
                         .then(tx => {
                             console.log("tx: ", tx)
                         });
@@ -190,7 +190,7 @@ async function getQuote(account) {
 
         console.log("params:",params)
         // Fetch the swap quote.
-        const response = await fetch(`https://api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
+        const response = await fetch(`http://api.0x.org/swap/v1/quote?${qs.stringify(params)}`);
         console.log("response:",response);
         console.log("sttus:", response.status, response.type);
         if (response.status == 400) {
@@ -229,18 +229,19 @@ async function trySwap(){
     const ERC20TokenContract = new web3.eth.Contract(erc20abi, fromTokenAddress);
     console.log("setup ERC20TokenContract: ", ERC20TokenContract);
     console.log("swapQuoteJSON.allowanceTarget:",swapQuoteJSON.allowanceTarget, maxApproval)
+
     // Grant the allowance target an allowance to spend our tokens.
-    const tx = await ERC20TokenContract.methods.approve(
-        swapQuoteJSON.allowanceTarget,
-        maxApproval,
-    )
-    .send({ from: takerAddress })
-    .then(tx => {
-        console.log("tx: ", tx)
-    });
+    // const tx = await ERC20TokenContract.methods.approve(
+    //     swapQuoteJSON.allowanceTarget,
+    //     maxApproval,
+    // )
+    // .send({ from: takerAddress, gasLimit:  40000 })
+    // .then(tx => {
+    //     console.log("tx: ", tx)
+    // });
 
     // Perform the swap
-    const receipt = await web3.eth.sendTransaction(swapQuoteJSON);
+    const receipt = await web3.eth.sendTransaction(swapQuoteJSON, {gasLimit: 500000});
     console.log("receipt: ", receipt);
 }
 
